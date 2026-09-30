@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Q Attendance Register</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#000000"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Attendance">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#000;--gold:#EDBA43;--bg:#fff;--soft:#f5f3ee;--line:#e3e0d8;--ok:#1f7a3d;--late:#b7791f;--bad:#b42318}
+@media(prefers-color-scheme:dark){:root{--ink:#fff;--bg:#111;--soft:#1c1c1c;--line:#333}}
+*{box-sizing:border-box}body{margin:0;font:16px/1.4 Outfit,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:560px;margin:auto;padding:20px 16px 90px}
+.logo{display:block;width:110px;margin:24px auto 8px;border-radius:12px}
+h1{font-size:28px;text-align:center;margin:8px 0}p.sub{text-align:center;opacity:.7;margin:0 0 28px}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{display:block;width:100%;padding:15px;border:2px solid var(--ink);border-radius:12px;background:var(--ink);color:var(--bg);font-weight:600;margin:10px 0;cursor:pointer}
+.btn.gold{background:var(--gold);color:#000;border-color:var(--gold)}.btn.ghost{background:none;color:var(--ink)}
+input,select,textarea{width:100%;padding:13px;border:2px solid var(--line);border-radius:10px;background:var(--bg);margin:6px 0 14px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid var(--gold)}
+label{font-weight:600}.err{color:var(--bad);min-height:22px;font-weight:600}
+.bar{display:flex;align-items:center;gap:10px;background:#000;color:#fff;padding:12px 16px;border-bottom:4px solid var(--gold);position:sticky;top:0;z-index:5}
+.bar img{width:30px;height:30px;border-radius:6px}.bar b{flex:1}.bar button{background:none;border:1px solid #888;color:#fff;border-radius:8px;padding:6px 10px}
+.row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}.row span{flex:1}
+.seg{display:flex;border:2px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:none;padding:9px 11px;font-weight:600;min-width:44px;cursor:pointer}
+.seg button.on.P{background:var(--ok);color:#fff}.seg button.on.L{background:var(--gold);color:#000}.seg button.on.A{background:var(--bad);color:#fff}
+.save{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
+.save .btn{max-width:528px;margin:0 auto}
+.card{background:var(--soft);border-radius:14px;padding:14px;margin:12px 0;border-left:6px solid var(--gold)}
+.card h3{margin:0;display:flex;justify-content:space-between}.pct{font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.chip{font-size:13px;padding:3px 8px;border-radius:99px;background:var(--bg);border:1px solid var(--line)}
+details{margin-top:6px}.small{font-size:14px;opacity:.8}.hide{display:none}
+</style></head><body>
+<div id="welcome"><main>
+<img class="logo" src="icon-192.png" alt="Company logo">
+<h1>Attendance Register</h1><p class="sub">Record group attendance in under a minute.</p>
+<button class="btn gold" onclick="show('tlogin')">Teacher login</button>
+<button class="btn ghost" onclick="show('alogin')">Admin summary</button>
+</main></div>
+
+<div id="tlogin" class="hide"><main>
+<button class="btn ghost" style="width:auto;padding:8px 14px" onclick="show('welcome')">Back</button>
+<h1>Teacher login</h1>
+<label for="g">Group name</label><input id="g" placeholder="e.g. 4 LOA" autocapitalize="characters" autocomplete="off">
+<label for="tp">App password</label><input id="tp" type="password" autocomplete="current-password">
+<div class="err" id="terr"></div><button class="btn" onclick="teacherLogin()">Open register</button>
+</main></div>
+
+<div id="alogin" class="hide"><main>
+<button class="btn ghost" style="width:auto;padding:8px 14px" onclick="show('welcome')">Back</button>
+<h1>Admin login</h1>
+<label for="ap">Admin password</label><input id="ap" type="password">
+<div class="err" id="aerr"></div><button class="btn" onclick="adminLogin()">Show summary</button>
+</main></div>
+
+<div id="reg" class="hide"><div class="bar"><img src="icon-192.png" alt=""><b id="rt"></b><button onclick="logout()">Log out</button></div><main>
+<div class="small" id="rtime"></div>
+<label for="dt">Lesson date</label><select id="dt" onchange="loadDate()"></select>
+<button class="btn ghost" style="padding:9px" onclick="allPresent()">Mark everyone present</button>
+<div id="pupils"></div>
+<label for="note" style="display:block;margin-top:16px">Notes (optional)</label><textarea id="note" rows="3" placeholder="Anything the office should know"></textarea>
+<div class="err" id="rerr"></div>
+</main><div class="save"><button class="btn gold" id="sv" onclick="save()">Save attendance</button></div></div>
+
+<div id="sum" class="hide"><div class="bar"><img src="icon-192.png" alt=""><b>Attendance summary</b><button onclick="logout()">Log out</button></div><main id="sumbody"></main></div>
+
+<script>
+const API_URL="PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+let pw="",G=null,M=[];const $=i=>document.getElementById(i);
+const show=id=>{["welcome","tlogin","alogin","reg","sum"].forEach(s=>$(s).classList.toggle("hide",s!==id));scrollTo(0,0)};
+async function get(q){const r=await fetch(API_URL+"?"+new URLSearchParams(q));return r.json()}
+async function post(b){const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(b)});return r.json()}
+const fail=(e,m)=>{$(e).textContent=m};
+function logout(){pw="";G=null;$("tp").value=$("ap").value="";show("welcome")}
+async function teacherLogin(){
+  fail("terr","");const g=$("g").value.trim();pw=$("tp").value;if(!g||!pw)return fail("terr","Enter your group and password.");
+  if(API_URL.startsWith("PASTE"))return fail("terr","App not connected to the sheet yet (API_URL).");
+  try{const d=await get({action:"group",group:g,pw});if(d.error)return fail("terr",d.error==="Wrong password"?"Wrong password.":"Group not found. Check the name matches a tab.");
+  G=d;openReg()}catch(e){fail("terr","Could not reach the sheet. Check your connection.")}}
+function openReg(){
+  $("rt").textContent=G.name;$("rtime").textContent=G.time;
+  const t=new Date().toISOString().slice(0,10);let best=0;G.dates.forEach((d,i)=>{if(d<=t)best=i});
+  $("dt").innerHTML=G.dates.map((d,i)=>`<option value="${i}">${fmt(d)}${G.marks.some(m=>m[i])?" ✓":""}</option>`).join("");
+  $("dt").value=best;loadDate();show("reg")}
+const fmt=d=>{const x=new Date(d+"T12:00");return isNaN(x)?d:x.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",year:"numeric"})};
+function loadDate(){
+  const i=+$("dt").value;M=G.marks.map(m=>m[i]||"");$("note").value=G.notes[i]||"";$("rerr").textContent="";drawP()}
+function drawP(){$("pupils").innerHTML=G.pupils.map((p,k)=>`<div class="row"><span>${p}</span><div class="seg">${[["P","Present"],["L","Late"],["A","Absent"]].map(([c,n])=>`<button class="${c}${M[k]===c?" on":""}" aria-label="${n}" aria-pressed="${M[k]===c}" onclick="mark(${k},'${c}')">${c}</button>`).join("")}</div></div>`).join("")}
+function mark(k,c){M[k]=c;drawP()}
+function allPresent(){M=M.map(()=>"P");drawP()}
+async function save(){
+  if(M.some(m=>!m))return fail("rerr","Mark every pupil as Present, Late or Absent before saving.");
+  const i=+$("dt").value,b=$("sv");b.disabled=true;b.textContent="Saving…";
+  try{const r=await post({pw,group:G.name,date:G.dates[i],marks:M,note:$("note").value});
+  if(r.error)fail("rerr",r.error);else{G.marks.forEach((m,k)=>m[i]=M[k]);G.notes[i]=$("note").value;
+  [...$("dt").options].forEach((o,j)=>o.textContent=fmt(G.dates[j])+(G.marks.some(m=>m[j])?" ✓":""));b.textContent="Saved ✓";setTimeout(()=>b.textContent="Save attendance",1800);b.disabled=false;return}}
+  catch(e){fail("rerr","Could not save. Check your connection and try again.")}
+  b.disabled=false;b.textContent="Save attendance"}
+async function adminLogin(){
+  fail("aerr","");pw=$("ap").value;if(API_URL.startsWith("PASTE"))return fail("aerr","App not connected to the sheet yet (API_URL).");
+  try{const d=await get({action:"all",pw});if(d.error)return fail("aerr",d.error==="Wrong password"?"Wrong password.":"That password is not an admin login.");
+  drawSum(d.groups);show("sum")}catch(e){fail("aerr","Could not reach the sheet.")}}
+function drawSum(gs){
+  $("sumbody").innerHTML=gs.map(g=>{
+    let P=0,L=0,A=0;const lessons=g.dates.map((d,i)=>{let p=0,l=0,a=0;g.marks.forEach(m=>{const c=m[i];c==="P"?p++:c==="L"?l++:c==="A"?a++:0});P+=p;L+=l;A+=a;return{d,p,l,a,n:p+l+a}}).filter(x=>x.n);
+    const tot=P+L+A,pc=tot?Math.round((P+L)/tot*100):null,last=lessons[lessons.length-1];
+    const abs=g.pupils.map((n,k)=>[n,g.marks[k].filter(c=>c==="A").length]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]);
+    const notes=g.dates.map((d,i)=>g.notes[i]?`${fmt(d)}: ${g.notes[i]}`:"").filter(Boolean);
+    return `<div class="card"><h3>${g.name}<span class="pct">${pc===null?"–":pc+"%"}</span></h3><div class="small">${g.time} · ${g.pupils.length} pupils · ${lessons.length} lesson${lessons.length===1?"":"s"} recorded</div>
+    <div class="chips">${lessons.map(x=>`<span class="chip">${fmt(x.d).replace(/,? \d{4}$/,"")}: ${x.p+x.l}/${x.n}</span>`).join("")||'<span class="small">No attendance recorded yet.</span>'}</div>
+    ${last?`<div class="small">Latest: ${last.p} present, ${last.l} late, ${last.a} absent</div>`:""}
+    ${abs.length?`<details><summary>Pupils with absences (${abs.length})</summary>${abs.map(x=>`<div class="small">${x[0]} – ${x[1]} absent</div>`).join("")}</details>`:""}
+    ${notes.length?`<details><summary>Notes (${notes.length})</summary>${notes.map(n=>`<div class="small">${n}</div>`).join("")}</details>`:""}</div>`}).join("")}
+</script></body></html>
