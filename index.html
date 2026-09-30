@@ -67,7 +67,7 @@ details{margin-top:6px}.small{font-size:14px;opacity:.8}.hide{display:none}
 <div id="sum" class="hide"><div class="bar"><img src="icon-192.png" alt=""><b>Attendance summary</b><button onclick="logout()">Log out</button></div><main id="sumbody"></main></div>
 
 <script>
-const API_URL=https://script.google.com/macros/s/AKfycbxEY64Pwt1nwO8t14_a4jqSrkg_sdXWq5KlEwvlvXYLwKhkn9HCYiht9VNRxb7xkPHn/exec;
+const API_URL="https://script.google.com/macros/s/AKfycbxEY64Pwt1nwO8t14_a4jqSrkg_sdXWq5KlEwvlvXYLwKhkn9HCYiht9VNRxb7xkPHn/exec";
 let pw="",G=null,M=[];const $=i=>document.getElementById(i);
 const show=id=>{["welcome","tlogin","alogin","reg","sum"].forEach(s=>$(s).classList.toggle("hide",s!==id));scrollTo(0,0)};
 async function get(q){const r=await fetch(API_URL+"?"+new URLSearchParams(q));return r.json()}
